@@ -1,62 +1,68 @@
-{% extends "index.html" %}
-{% import "post_macros.html" as post_macros %}
+{% extends "basic.html" %}
 
-{% block title %}
-    {% if page.title %}
-    {{ page.title }}
-    {% else %}
-    {{ super() }} 
-    {% endif %}
-{% endblock title %}
+{% block title %}{{ config.title }} • {{ page.title }}{% endblock title %}
 
 {% block content %}
-    {% block header %}
-        {{ super() }}
-    {% endblock header %}
-
-<article itemscope itemtype="http://schema.org/BlogPosting">
-    <header>
-        <h1 itemprop="headline">{{ page.title }}</h1>
-        <span class="muted">{{ post_macros::meta(page=page) }}</span>
-    </header>
-    <div itemprop="articleBody">
-      {{ page.content | safe }}
+<article class="post animated fadeInDown">
+  <h1><a href="{{ page.permalink }}">{{ page.title }}</a></h1>
+  {% if page.extra.author %}
+  <div class="info">By {{ page.extra.author }}.</div>
+  {% endif %}
+  <div class="post-content">{{ page.content | safe }}</div>
+  <div class="post-footer">
+    <div class="meta">
+      <div class="info">
+        {% if page.date %}
+        <i class="far fa-sun"></i><span class="date">{{ page.date | date(format=trans(key="date_format", lang=lang))
+          }}</span>
+        {% endif %}
+        {% if page.taxonomies.tags %}
+        <i class="fas fa-tags"></i>
+        {% for tag in page.taxonomies.tags %}
+        <a class="tag" href="{{ get_url(path="@/_index.md", lang=lang) }}tags/{{tag}}">&nbsp;{{tag}}</a>
+        {% endfor %}
+        {% endif %}
+      </div>
     </div>
-
-    {% block page_footer %}
-        <footer>
-            <hr>
-            <p>
-                {% if page.extra.author %}
-                    Published by {{ page.extra.author }}
-                {% elif config.extra.author %}
-                    Published by {{ config.extra.author }}
-                {% endif %}
-                {% if page.taxonomies.categories %}
-                    {% set category = page.taxonomies.categories[0] %}
-                    in <a href="{{ get_taxonomy_url(kind="categories", name=category) | safe }}">{{ category }}</a>
-                {% endif %}
-                {% if page.taxonomies.tags %}
-                    {% if page.taxonomies.categories %}and{% endif %}
-                    tagged
-                    {% for tag in page.taxonomies.tags %}
-                        <a href="{{ get_taxonomy_url(kind="tags", name=tag) | safe }}">{{ tag }}</a>
-                        {% if page.taxonomies.tags | length > 1 %}
-                            {% if loop.index != page.taxonomies.tags | length %}
-                                {% if loop.index == page.taxonomies.tags | length - 1 %}
-                                    and
-                                {% else %}
-                                    ,
-                                {% endif %}
-                            {% endif %}
-                        {% endif %}
-                    {% endfor %}
-                {% endif %}
-            </p>
-            {% block extra_footer %}
-            {% endblock extra_footer %}
-        </footer>
-    {% endblock page_footer %}
+  </div>
 </article>
-
+<div class="share">
+  <div class="weibo">
+    <a class="fab fa-weibo"
+      href="javascript:void((function(s,d,e){try{}catch(e){}var f='http://service.weibo.com/share/share.php?',u=d.location.href,p=['url=',e(u),'&title=',e(d.title),'&appkey=2924220432'].join('');function a(){if(!window.open([f,p].join(''),'mb',['toolbar=0,status=0,resizable=1,width=620,height=450,left=',(s.width-620)/2,',top=',(s.height-450)/2].join('')))u.href=[f,p].join('');};if(/Firefox/.test(navigator.userAgent)){setTimeout(a,0)}else{a()}})(screen,document,encodeURIComponent));"></a>
+  </div>
+  <div class="twitter">
+    <a class="fab fa-twitter"
+      href="http://twitter.com/share?text={{ page.title }}&url={{ page.permalink | trim_end_matches(pat=" /") }}{% if
+      page.taxonomies.tags %}&hashtags={{ page.taxonomies.tags | join(sep="," ) }}{% endif %}"></a>
+  </div>
+</div>
+{% include "comments.html" %}
+{% if page.extra.mathjax %}
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script>
+  MathJax = {
+    tex: {
+      displayMath: [['$$', '$$'], ["\\[", "\\]"]],
+      inlineMath: [['$', '$'], ['\\(', '\\)']]
+    }
+  };
+</script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/{{ page.extra.mathjax }}-chtml.js">
+  </script>
+{% endif %}
+{% if page.extra.tikzjax %}
+<link rel="stylesheet" type="text/css" href="https://tikzjax.com/v1/fonts.css">
+<style>
+  .tikz>svg {
+    overflow: visible;
+  }
+</style>
+<script src="{{ get_url(path="js/tikzjax.js", trailing_slash=false) }}"></script>
+{% endif %}
+{% if page.extra.mermaid %}
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true });</script>
+{% endif %}
 {% endblock content %}
